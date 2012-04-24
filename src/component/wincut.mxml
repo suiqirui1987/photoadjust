@@ -1,0 +1,496 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml"   layout="absolute"  title="图片编辑"
+ xmlns:com="com.*" width="780"   height="520"    headerHeight="0"   creationComplete="initApp()"
+   borderThicknessBottom="0" borderThicknessLeft="0" borderThicknessRight="0"  backgroundColor="#FFFFFF" 
+  horizontalScrollPolicy="off"  verticalScrollPolicy="off"  styleName="bgtitlewindow"  
+  cornerRadius="2">
+
+<mx:Style>
+
+
+	.cancelbutton
+	{
+		upSkin: Embed(source='../style/FLAS.swf',symbol='cancelbutton');
+		overSkin: Embed(source="../style/FLAS.swf", symbol="cancelbutton");
+		downSkin: Embed(source="../style/FLAS.swf", symbol="cancelbutton");
+	}
+	.leftbutton
+	{
+		upSkin: Embed(source='../style/FLAS.swf',symbol='leftbutton');
+		overSkin: Embed(source="../style/FLAS.swf", symbol="leftbutton");
+		downSkin: Embed(source="../style/FLAS.swf", symbol="leftbutton");
+		fontFamily:宋体;
+		fontWeight:normal;
+	    fontSize:12;
+	    paddingLeft: 0;
+   		paddingRight: 0;
+	}
+	.savebutton
+	{
+		upSkin: Embed(source='../style/FLAS.swf',symbol='savebutton');
+		overSkin: Embed(source="../style/FLAS.swf", symbol="savebutton");
+		downSkin: Embed(source="../style/FLAS.swf", symbol="savebutton");
+	}
+	.bgtitlewindow
+	{
+	    backgroundImage:Embed(source='../style/FLAS.swf',symbol='bgcanvas');
+  		
+	    closeButtonSkin: Embed(source='../style/FLAS.swf',symbol='closebutton'); 
+	    closeButtonDisabledSkin: ClassReference(null); 
+	    closeButtonDownSkin: ClassReference(null); 
+	    closeButtonOverSkin: ClassReference(null); 
+	    closeButtonUpSkin: ClassReference(null); 
+	    fontFamily:Courier New;
+	    fontSize:13;
+	}
+	.cbgcanvas
+	{
+		backgroundImage:Embed(source='../style/FLAS.swf',symbol='cabg');
+		paddingLeft: 20;
+  
+	}
+	.defaultbutton
+	{
+		upSkin: Embed(source='../style/FLAS.swf',symbol='defaultbutton');
+		overSkin: Embed(source="../style/FLAS.swf", symbol="defaultbutton");
+		downSkin: Embed(source="../style/FLAS.swf", symbol="defaultbutton");
+	}
+	.printradio
+	{
+		fontFamily:宋体;
+	    fontSize:12;
+	}
+	.memoText
+	{
+		fontFamily:宋体;
+	    fontSize:12;
+	}
+</mx:Style>
+	<mx:Script>
+		<![CDATA[
+			
+			import mx.events.StateChangeEvent;
+			import mx.automation.delegates.controls.RadioButtonAutomationImpl;
+			import mx.events.EffectEvent;
+			import mx.effects.Zoom;
+			import mx.controls.Image;
+			import mx.graphics.codec.JPEGEncoder;
+			import mx.effects.Rotate;
+			import mx.events.SliderEvent;
+			import mx.controls.Alert;
+			import mx.events.FlexEvent;
+			import mx.events.CloseEvent;
+			import com.*;
+
+			
+			/** 传输尺寸 ***/
+			[Bindable]
+			public var size_width:Number=723;
+			[Bindable]
+			public var size_height:Number=1077;
+			
+			[Bindable]
+			public var size_object:Object=new Object();
+			[Bindable]
+			public var img_src:String="";//"http://www.taoxi.com/user_root/test/948b5b7eb76e5d81b8f62171fb51b05e.jpg";
+			[Bindable]
+			public var img_width:Number=2816 ;
+			[Bindable]
+			public var img_height:Number=2112 ;
+			
+		/** 显示区域**/
+			public var hostname:String="http://www.taoxi.com";
+			public var bigw:Number=360;
+			public var zwidth:Number=0;
+			public var zheight:Number=0;
+			public var zw_pre:Number=0;
+			public var zh_pre:Number=0;
+			public var photoid:Number=0;
+			public var userid:Number=0;
+			public var select_size:Number=0;
+			
+			public var JSCLOSEFUNCTION:String="closeadjustdiv";
+			public var UpdatePhotoidFunction:String="updatecloseadjustdiv";
+			public var SUBMITURL:String="";
+			
+			
+			private var rotate:Rotate;
+			public var angle:int=0;   	       
+		    
+		    
+		    
+		    public function initApp():void
+			{
+				
+				//侦听事件
+				this.addEventListener(CloseEvent.CLOSE,closeHandler);//关闭事件					
+				this.keepradio.addEventListener(MouseEvent.CLICK,keepradioHandler);
+				this.cutradio.addEventListener(MouseEvent.CLICK,cutradioHandler);
+				this.brightnesssilder.addEventListener(mx.events.SliderEvent.CHANGE,sliderChange);
+				this.leftbutton.addEventListener(MouseEvent.CLICK,leftbuttonclickHandler);
+				this.rightbutton.addEventListener(MouseEvent.CLICK,rightbuttonclickHandler);
+				this.bigsmallslider.addEventListener(SliderEvent.CHANGE,bigsmallsiderHandler);
+				this.submitbutton.addEventListener(MouseEvent.CLICK,submitHandler);
+				this.cancelbutton.addEventListener(MouseEvent.CLICK,closeHandler);
+				this.addEventListener(MouseEvent.MOUSE_UP,StopMoveHandler);
+				this.defaultButton.addEventListener(MouseEvent.CLICK,comebackHandler);
+				this.closebutton.addEventListener(MouseEvent.CLICK,closeHandler);
+				this.submitbutton.enabled=false;
+				this.SUBMITURL=this.hostname.toString()+"/photo/flashbuildjpeg.php?photoid="+this.photoid.toString()+"&userid="+this.userid.toString();
+				var li:loadsaveinfo=new loadsaveinfo(this);
+				li.loadinfo();
+				
+			}
+			
+		
+			
+			public function adjustsize():void
+			{
+				var temmax:Number=Math.max(this.size_height,this.size_width);
+				var temmin:Number=Math.min(this.size_height,this.size_width);
+				
+				      //根据图像宽度，适应调节生成图片的宽，高。。。
+				//调整边宽
+				if(this.img_width > this.img_height)
+				{
+					this.size_width=temmax;
+					this.size_height=temmin;
+				}
+				else
+				{
+					this.size_width=temmin;
+					this.size_height=temmax;
+				}
+				   //图片处理区
+				//调整阴影区
+				if(this.img_width > this.img_height)
+				{
+					this.zwidth=360;
+					this.zheight=this.zwidth/this.size_width * this.size_height;
+				}
+				else
+				{
+					this.zheight=360;
+					this.zwidth=this.zheight/this.size_height * this.size_width;
+				}	
+				//防止超过360
+				if(this.zheight > 360)
+				{
+					this.zheight=360;
+					this.zwidth=this.zheight/this.size_height * this.size_width;
+				}
+				if(this.zwidth > 360)
+				{
+					this.zwidth=360;
+					this.zheight=this.zheight/this.size_height * this.size_width;
+				}
+				   //尺寸比例
+				this.zh_pre=this.zheight/this.size_height;
+				this.zw_pre=this.zwidth/this.size_width;
+				
+				this.imgcontainer.urectHeight=this.zheight;
+				this.imgcontainer.urectWidth=this.zwidth;				
+				this.imgcontainer.DrawingRect();
+				
+				if(this.img_width > this.img_height)
+				{		
+					this.imagesrc.uheight = this.zheight;
+					this.imagesrc.uwidth= this.zheight/ this.img_height* this.img_width;
+				}
+				else
+				{	
+					this.imagesrc.uwidth = this.zwidth;
+					this.imagesrc.uheight= this.zwidth/ this.img_width * this.img_height;
+				}	
+				this.imagesrc.imgcon=this.imgcontainer;
+				this.imagesrc.win=this;
+				this.imagesrc.src=this.hostname.toString()+"/photo/photo_editor_get.php?photoid="+this.photoid.toString()+"&userid="+this.userid.toString();//this.img_src+"?rand="+Math.random();	
+				
+			}
+			private function CallBackEventHandler(evt:Event):void
+			{
+					
+				if(this.cutradio.selected==true)
+				{
+					 this.cutradio.selected=true;
+				     this.cutradioHandler(new MouseEvent("mouse"));
+				}
+				if(this.keepradio.selected==true)
+				{
+					this.keepradio.selected=true;
+					this.keepradioHandler(new MouseEvent("mouse"));
+				}
+			}
+			public function AddPrintSizeRadio(v:Number=1):void
+			{
+				var arr:Array=com.PrintSize.print_size;
+				var per_tem:Number=10;
+				for(var i:Number=0;i<arr.length;i++)
+				{
+					var obj:Object=arr[i];
+					var radio:RadioButton=new RadioButton();
+						this.imagesrc.addEventListener(CallBackEvent.CALLBACKEVENT,CallBackEventHandler);
+					radio.addEventListener(MouseEvent.CLICK,printsizeHandler);
+					radio.groupName="printsizegroup";
+					radio.id="printsize_"+i.toString();
+					radio.x=i%4*73+10;
+					radio.y=Math.floor(i/4)*19+30;
+					radio.value=i;
+					if(i==v){radio.selected=true;this.select_size=i;}
+					radio.label=obj.size_title;
+					this.printsizecanvas.addChild(radio);
+				}
+			}
+			private function printsizeHandler(evt:Event):void
+			{
+				var radio:RadioButton=evt.target as RadioButton;
+				this.select_size=radio.value as Number;
+				var obj:Object=com.PrintSize.print_size[radio.value as Number];
+				this.size_width=obj.short_size;
+				this.size_height=obj.long_size;
+				this.comebackHandler(new Event("event"));
+				this.adjustsize();
+			}
+			
+			private function StopMoveHandler(evt:MouseEvent):void
+			{
+				this.imagesrc.stopDrag();
+			}
+			
+			public function previewHandler(e:MouseEvent):void
+			{
+			}
+			public function submitHandler(e:MouseEvent):void
+			{
+				var obj:Object=new Object();
+				obj.rotate=this.angle;						
+				var str:String=Imagehandler.buildimage(this.imagesrc,this,obj);
+				var ur:URLRequest=new URLRequest();
+				//提交数据对象
+				var ul:URLLoader=new URLLoader();
+				// 表单对象
+				var uv:URLVariables=new URLVariables();
+				ul.addEventListener(Event.COMPLETE,LoadCompleteHandler);
+trace(this.SUBMITURL);
+				ul.addEventListener(IOErrorEvent.IO_ERROR,LoadErrorHandler);
+				ur.url=this.SUBMITURL;
+				ur.method=URLRequestMethod.POST;
+				ur.data=uv;
+				uv.tempateinfo=str;
+				ul.load(ur);
+				this.showprogressState.visible=true;
+			}
+			public function LoadCompleteHandler(evt:Event):void
+			{
+				ExternalInterface.call(this.UpdatePhotoidFunction,this.photoid);
+				this.showprogressState.visible=false;
+			}
+			public function LoadErrorHandler(evt:Event):void
+			{
+				this.showprogressState.visible=false;
+			}	
+
+			public function bigsmallsiderHandler(evt:Event):void
+			{
+				var v:Number=(Number)(this.bigsmallslider.value);
+				this.imagesrc.width=this.imagesrc.width * v  ;
+				this.imagesrc.height=this.imagesrc.height * v ;
+				this.imagesrc.scale=v;
+				this.imagesrc.setxy();			
+			}
+			
+			public function leftbuttonclickHandler(evt:MouseEvent):void
+			{   
+				this.angle=(this.imagesrc.rotation -90)%360 ; //(this.angle-180)%360==0?0:this.angle-180;
+				this.imagesrc.rotation=this.angle;	
+			    trace(this.imagesrc.rotation+"::::"+this.angle+"::leftthis.imagesrc.rotation")
+				//this.imagesrc.setxy();		
+			}
+			
+		
+			
+			private function comebackHandler(evt:Event):void
+			{
+				this.angle=0;
+				this.imagesrc._brightness=0;
+				this.imagesrc.applyImageFilters();
+				this.imagesrc.rotation=this.angle;
+				this.bigsmallslider.value=1;
+				this.brightnesssilder.value=0;
+				isenablecomponent(true);
+				this.imagesrc.width=this.imagesrc.uwidth;
+				this.imagesrc.height=this.imagesrc.uheight;
+				this.imagesrc.setxy();
+				this.cutradio.selected=true;
+			}
+			public function effectendhandler(e:Event):void
+			{
+				this.leftbutton.enabled=true;
+				this.rightbutton.enabled=true;
+			}
+			public function rightbuttonclickHandler(evt:MouseEvent):void
+			{
+				this.angle=(this.imagesrc.rotation + 90)%360 ; //(this.angle+180)%360==0?0:this.angle+180;
+				this.imagesrc.rotation=this.angle;
+				trace(this.imagesrc.rotation+"::::"+this.angle+"::rightthis.imagesrc.rotation")
+				//this.imagesrc.setxy();	
+			}
+			public function sliderChange(evt:SliderEvent):void
+			{
+				this.imagesrc._brightness=this.brightnesssilder.value;
+				this.imagesrc.applyImageFilters();
+			}
+			
+			public function closeHandler(e:Event):void
+			{
+				ExternalInterface.call(this.JSCLOSEFUNCTION);
+			//	this.parentApplication.removeChild(this);
+			}
+			public function cutradioHandler(evt:MouseEvent):void
+			{
+				if(this.cutradio.selected==false){return ;}
+				this.isenablecomponent(true);   
+				this.bigsmallslider.value=1;
+				this.imagesrc.scale=1;
+				
+				var a:Number=this.imagesrc.width/this.imgcontainer.urectWidth;
+				var b:Number=this.imagesrc.height/this.imgcontainer.urectHeight;
+				if(a < b)
+				{
+					//宽度优先
+					this.imagesrc.height=this.imgcontainer.urectWidth/this.imagesrc.width * this.imagesrc.height;
+					this.imagesrc.width=this.imgcontainer.urectWidth;
+				}
+				else
+				{
+					//宽度优先
+					this.imagesrc.width=this.imgcontainer.urectHeight/this.imagesrc.height * this.imagesrc.width;
+					this.imagesrc.height=this.imgcontainer.urectHeight;	
+				}
+				
+			    this.imagesrc.setxy();
+			    
+			}
+			public function isenablecomponent(bo:Boolean):void
+			{
+				this.leftbutton.enabled=bo;
+				this.rightbutton.enabled=bo;
+				this.bigsmallslider.enabled=bo;
+			}
+			public function keepradioHandler(evt:MouseEvent):void
+			{
+			    if(this.keepradio.selected==false){return;}
+			 	this.isenablecomponent(false);   
+			 	
+			 	
+			 	
+			 	trace("this.bigsmallslider.value.toString"+this.bigsmallslider.value.toString());
+			 	
+				var conw:Number=this.imgcontainer.urectWidth;
+				var conh:Number=this.imgcontainer.urectHeight;
+				
+				var imgw:Number=this.imagesrc.uwidth;
+				var imgh:Number=this.imagesrc.uheight;
+				
+				if(Math.abs(this.angle) == 90 ||  Math.abs(this.angle) == 270)
+				{
+					var t:Number=imgw;
+					imgw=imgh;
+					imgh=t;
+				}
+				
+				var temp:Number=0;
+				var temph:Number=0;
+				var tempw:Number=0;
+				//宽
+				if(imgh > imgw)
+				{
+					temp=conh > imgh ? imgh : conh;
+					tempw=temp / imgh * imgw;
+					temph=temp;
+				}
+				else
+				{
+					temp=conw > imgw?imgw : conw;
+					temph=  temp /imgw * imgh;
+					tempw=temp;
+				}
+				if(Math.abs(this.angle) == 90 ||  Math.abs(this.angle) == 270)
+				{
+					var t:Number=tempw;
+					tempw=temph;
+					temph=t;
+				}
+				trace(tempw+":"+temph);
+				this.imagesrc.height=temph;
+				this.imagesrc.width=tempw;
+				
+			  
+				
+				this.imagesrc.setxy();
+			}
+
+		]]>
+	</mx:Script>
+
+
+<mx:Canvas  top="30" left="10" right="10"  height="427"  backgroundColor="#FFFFFF" borderThickness="1" borderColor="#0051C0" 
+	horizontalScrollPolicy="off" verticalScrollPolicy="off">
+
+<com:Imgcontainer backgroundColor="#FFFFFF"  horizontalScrollPolicy="off" verticalScrollPolicy="off"  
+	width="400" height="400"    id="imgcontainer"  y="10" x="10">				
+						 <com:imageloader id="imagesrc">
+						 </com:imageloader>	 
+						 
+</com:Imgcontainer>
+
+	    <mx:VBox  height="400" width="327" backgroundColor="#FFFFFF" y="10" x="415" right="10">
+			
+			        <mx:Canvas  width="100%" height="70" styleName="cbgcanvas" backgroundSize="100%" >
+			        	
+						<mx:Text  styleName="memoText"  paddingLeft="10"   text="注意：虚线外的灰色部分，会被裁剪掉哦！" fontWeight="bold" width="100%" textAlign="left" y="10"></mx:Text>
+						<mx:Text  styleName="memoText"  paddingLeft="10"   text="虚线框内即为照片冲印出来的效果" y="30"  width="100%" textAlign="left" x="0"> </mx:Text>
+						<mx:Text  styleName="memoText" paddingLeft="10"   text="您可以拖动照片，调整想冲印的位置" y="50"  width="100%" textAlign="left" x="0"></mx:Text>
+					</mx:Canvas>
+					<mx:Canvas id='printsizecanvas' width="100%" height="90"  styleName="cbgcanvas" backgroundSize="100%" >
+						<mx:RadioButtonGroup id="printsizegroup"></mx:RadioButtonGroup>
+						<mx:Text  x="10" y="10" text="请选择冲印尺寸" fontWeight="bold">
+							
+						</mx:Text>
+					</mx:Canvas>					
+					<mx:Canvas  width="100%" top="20" height="128"  horizontalScrollPolicy="off" styleName="cbgcanvas" backgroundSize="100%">
+					    <mx:RadioButtonGroup id="radiogroup"/>
+					    <mx:RadioButton paddingLeft="10" y="10"  width="100"   groupName="radiogroup"    label="裁剪图片"  id="cutradio" selected="true" fontWeight="bold"/>
+					    
+					    		<mx:Button      height="23" label="向左转"  buttonMode="true" styleName="leftbutton" 
+					    			 id="leftbutton"  y="37"   x="32"></mx:Button>
+					    		<mx:HSlider   maximum="2" minimum="0.1" value="1"    x="87" width="147" y="36" id="bigsmallslider" >
+					    		</mx:HSlider>			    		
+					    		<mx:Button  x="238"  height="23"  styleName="leftbutton"  buttonMode="true" label="向右转" id="rightbutton" y="37" ></mx:Button>
+					  
+					    <mx:RadioButton paddingLeft="10"  y="67"  width="100"   groupName="radiogroup"   label="保全图片"  id="keepradio"   fontWeight="bold" />
+					             <mx:Text text="照片完整的冲印出来，但可能有白边" y="88" x="30">
+					             	
+					             </mx:Text>
+					</mx:Canvas>
+					
+					<mx:Canvas  width="100%" top="20" height="75"  textAlign="center" styleName="cbgcanvas" backgroundSize="100%">
+						<mx:Image   source="@Embed(source='../style/FLAS.swf',symbol='brightbutton')" width="28" height="28" x="10" y="10">
+						</mx:Image>
+						<mx:Label x="47" y="17" text="亮度调整" fontWeight="bold"/>
+					    <mx:HSlider  maximum="100" value="0" minimum="-100" y="40"  width="300"   id="brightnesssilder"   x="15"></mx:HSlider>
+					    
+					</mx:Canvas>
+	
+		</mx:VBox>
+
+</mx:Canvas>
+<mx:UIComponent id="previewimage" visible="false"   click="this.previewimage.visible=false"/>
+	<mx:Button x="482" y="469" label="确定" id="submitbutton" color="#000000" buttonMode="true" fontSize="14" styleName="savebutton"/>
+	<mx:Button x="612" y="469" label="取消" id="cancelbutton" color="#000000"  buttonMode="true" fontSize="14" styleName="cancelbutton" />
+	<mx:Button x="12" y="469" label="还原默认值" id="defaultButton" color="#000000" fontSize="14"  buttonMode="true" styleName="defaultbutton" />
+	
+	<mx:Label x="10" y="6" text="图片编辑"/>
+	<mx:Image x="700" y="0" source="@Embed(source='../style/FLAS.swf',symbol='closebutton')" width="39.0"  height="18.0" buttonMode="true"   id="closebutton"/>
+		 <mx:ProgressBar   visible="false"   id="showprogressState" width="262" height="19"  x="240" y="245" labelPlacement="center" indeterminate="true" label="正在生成，请稍候..."/>
+</mx:TitleWindow>

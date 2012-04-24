@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Application xmlns:mx="http://www.adobe.com/2006/mxml" layout="absolute" fontFamily="Courier New" fontSize="13"   preloader="com.Preloader"
+	 initialize="InitApp()" xmlns:component="component.*"  backgroundAlpha="0" >
+
+<mx:Script>
+	<![CDATA[
+		import mx.controls.Alert;
+		public function InitApp():void
+		{
+			var FlashVars:Object=Application.application.parameters;
+			/*
+				this.HostURL=(FlashVar.HostName==null || FlashVar.HostName=="")?"http://www.taoxi.com":FlashVar.HostName;
+				this.UserId=(FlashVar.UserId==null || FlashVar.UserId=="")?59:FlashVar.UserId;
+				this.win_cutid.size_width=(FlashVars.sizew == null || FlashVars.sizew == "")?900:FlashVars.sizew;
+				this.win_cutid.size_height=(FlashVars.sizeh == null || FlashVars.sizeh=="")?1200:FlashVars.sizeh;
+			*/
+		//	this.win_cutid.img_src=(FlashVars.src==null || FlashVars.src=="")?"http://www.taoxi.com/user_root/test/948b5b7eb76e5d81b8f62171fb51b05e.jpg":FlashVars.src;
+			
+			this.win_cutid.hostname=(FlashVars.hostname==null || FlashVars.hostname=="")?"http://www.taoxi.com":FlashVars.hostname;
+			this.win_cutid.img_width=(FlashVars.imgw==null || FlashVars.imgw=="")?2816:FlashVars.imgw;
+			this.win_cutid.img_height=(FlashVars.imgh==null || FlashVars.imgh=="")?2112:FlashVars.imgh;
+			this.win_cutid.JSCLOSEFUNCTION=(FlashVars.cjs==null || FlashVars.cjs=="")?"closeadjustdiv":FlashVars.cjs;
+			this.win_cutid.UpdatePhotoidFunction=(FlashVars.ujs==null || FlashVars.ujs=="")?"updatecloseadjustdiv":FlashVars.ujs;
+			this.win_cutid.userid=(FlashVars.userid==null || FlashVars.userid=="")?9405:FlashVars.userid;
+			this.win_cutid.photoid=(FlashVars.photoid==null || FlashVars.photoid=="")?2055157:FlashVars.photoid;
+			
+		//	this.win_cutid.SUBMITURL=(FlashVars.submiturl==null || FlashVars.submiturl=="")?"http://www.taoxi.com/photo/flashbuildjpeg.php?photoid=1899893&userid=62191":FlashVars.submiturl+"?photoid="+FlashVars.photoid+"&userid="+FlashVars.userid;
+		    ExternalInterface.addCallback("flashinvokejs",FlashInvoke);
+		    
+		}
+		 public function FlashInvoke(value:String):void
+		 {
+		 	var arr:Array=value.split("&");
+		 	for(var i:Number=0;i<arr.length;i++)
+		 	{
+		 		var kv:String=arr[i].toString();
+		 		var kearr:Array=kv.split("=");
+		 		var key:String=kearr[0];
+		 		var val:String=kearr[1];
+		 		switch(key)
+		 		{
+		 			case "sizew":
+		 				this.win_cutid.size_width=Number(val);
+		 				break;
+		 			case "sizeh":
+		 				this.win_cutid.size_height=Number(val);
+		 				break;
+		 			case "src":
+		 				this.win_cutid.img_src=val;
+		 				break;
+		 			case "imgw":
+		 				this.win_cutid.img_width=Number(val);
+		 				break;
+		 			case "imgh":
+		 				this.win_cutid.img_height=Number(val);
+		 				break;
+		 			case "cjs":
+		 				this.win_cutid.JSCLOSEFUNCTION=val;
+		 				break; 
+		 			case "ujs":
+		 				this.win_cutid.UpdatePhotoidFunction=val;
+		 				break;
+		 			case "submiturl":
+		 				this.win_cutid.SUBMITURL=val;
+		 				break;
+		 		}
+		 	}
+		 	
+		 	this.win_cutid.initApp();
+		 }
+	]]>
+</mx:Script>
+ <component:wincut  id="win_cutid"  fontFamily="Courier New" fontSize="13">
+	</component:wincut>
+
+</mx:Application>

@@ -1,0 +1,35 @@
+
+global
+{
+	fontFamily: "宋体";
+	fontSize: 12;
+    
+}
+.cancelbutton
+{
+	upSkin: Embed(source='FLAS.swf',symbol='cancelbutton');
+	overSkin: Embed(source="FLAS.swf", symbol="cancelbutton");
+	downSkin: Embed(source="FLAS.swf", symbol="cancelbutton");
+}
+.leftbutton
+{
+	upSkin: Embed(source='FLAS.swf',symbol='leftbutton');
+	overSkin: Embed(source="FLAS.swf", symbol="leftbutton");
+	downSkin: Embed(source="FLAS.swf", symbol="leftbutton");
+}
+.savebutton
+{
+	upSkin: Embed(source='FLAS.swf',symbol='savebutton');
+	overSkin: Embed(source="FLAS.swf", symbol="savebutton");
+	downSkin: Embed(source="FLAS.swf", symbol="savebutton");
+}
+.bgcanvas
+{
+    backgroundImage:Embed(source='FLAS.swf',symbol='bgcanvas');
+    closeButtonSkin: Embed(source='FLAS.swf',symbol='bgcanvas'); 
+    /* Set values from defaults.css to null. */ 
+    closeButtonDisabledSkin: ClassReference(null); 
+    closeButtonDownSkin: ClassReference(null); 
+    closeButtonOverSkin: ClassReference(null); 
+    closeButtonUpSkin: ClassReference(null); 
+}
